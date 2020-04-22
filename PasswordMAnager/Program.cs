@@ -11,7 +11,7 @@ namespace MenedzerHasel
     class Interfejs
     {
         private bool znakiSpecjalne, cyfry, duzeLitery, maleLitery=true;
-        private string uzytkownik;
+        private string user2;
         private List<Haslo> ListaHasel = new List<Haslo>();
         public void noweHaslo()
         {
