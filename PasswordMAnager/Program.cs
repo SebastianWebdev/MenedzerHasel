@@ -1,17 +1,118 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using System.IO;
+using System.Runtime.Serialization;
+
+using System.Xml.Serialization;
+
+
 
 namespace MenedzerHasel
 {
-    class BazaHasel
+
+    [Serializable]
+     public class HasloDane
     {
+         public string nazwa { get; set; }
+         public string wartosc { get; set; }
+        public HasloDane() { }
+        public HasloDane(string naz,string wart)
+        {
+            nazwa = naz;
+            wartosc = wart;
+        }
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("1", nazwa);
+            info.AddValue("2", wartosc);
+        
+        }
+        public HasloDane(SerializationInfo info, StreamingContext context)
+        {
+            nazwa = (string)info.GetValue("1",typeof(string));
+            wartosc = (string)info.GetValue("2", typeof(string));
+        }
 
     }
+
+    [Serializable]
+    public class Dane : ISerializable
+    {
+        public bool znakiSpecjalne { get; set; }
+        public bool cyfry { get; set; }
+        public bool duzeLitery { get; set; }
+        public bool maleLitery { get; set; }
+        public string uzytkownik { get; set; }
+        public List<HasloDane> ListaHasel {get;set;}
+        public string hasloUzytkownika { get; set; }
+        public Dane()
+        {
+
+        }
+        public Dane(bool znaki, bool cyf,bool duze,bool male,string uz,string hasloUz,List<HasloDane> listaH)
+        {
+            znakiSpecjalne = znaki;
+            cyfry = cyf;
+            duzeLitery = duze;
+            maleLitery = male;
+            uzytkownik = uz;
+            ListaHasel = listaH;
+            hasloUzytkownika = hasloUz;
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("1", znakiSpecjalne);
+            info.AddValue("2", cyfry);
+            info.AddValue("3", duzeLitery);
+            info.AddValue("4", maleLitery);
+            info.AddValue("5", hasloUzytkownika);
+            info.AddValue("6", uzytkownik);
+            info.AddValue("7", ListaHasel);
+        }
+        public Dane(SerializationInfo info, StreamingContext context)
+        {
+            znakiSpecjalne = (bool)info.GetValue("1", typeof(bool));
+            cyfry = (bool)info.GetValue("2", typeof(bool));
+            duzeLitery = (bool)info.GetValue("3", typeof(bool));
+            maleLitery = (bool)info.GetValue("4", typeof(bool));
+            hasloUzytkownika = (string)info.GetValue("5", typeof(string));
+            uzytkownik = (string)info.GetValue("6", typeof(string));
+            ListaHasel = (List<HasloDane>)info.GetValue("7", typeof(List<HasloDane>));
+            
+        }
+    }
+    class ObslugaPlikow
+    {
+        
+        
+        public void ZapiszPlik(bool znakiSpecjalne,bool cyfry,bool duzeLitery,bool maleLitery,string uzytkownik,string hasloUzytkownika, List<Haslo> ListaHasel)
+        {
+            List<HasloDane> hasla = new List<HasloDane>();
+
+            foreach (var item in ListaHasel)
+            {
+                HasloDane haslo = new HasloDane(item.wezNazwe(),item.WezHaslo());
+                hasla.Add(haslo);
+                
+            }
+            Dane dane = new Dane(znakiSpecjalne, cyfry, duzeLitery, maleLitery, uzytkownik, hasloUzytkownika, hasla);
+            XmlSerializer serializer = new XmlSerializer(typeof(Dane));
+            using (TextWriter tw = new StreamWriter(@"C:\Users\Komp\c#AppData\user.xml"))
+            {
+                serializer.Serialize(tw, dane);
+            }
+
+        }
+    }
+   
     class Interfejs
     {
         private bool znakiSpecjalne, cyfry, duzeLitery, maleLitery=true;
-        private string user2;
+        private string uzytkownik = "";
+        private string hasloUzytkownika = "";
+
+
         private List<Haslo> ListaHasel = new List<Haslo>();
         public void noweHaslo()
         {
@@ -176,7 +277,6 @@ namespace MenedzerHasel
             }
 
         }
-
         private void uruhomUstawienia()
         {
             UstawZnakiSpecjalne();
@@ -219,20 +319,52 @@ namespace MenedzerHasel
             Console.WriteLine("zmien ustawienia --- Uruchamia program zminy ustawień");
 
         }
+        private void ZapiszDane()
+        {
+            ObslugaPlikow obs = new ObslugaPlikow();
+            obs.ZapiszPlik(znakiSpecjalne, cyfry, duzeLitery, maleLitery, uzytkownik, hasloUzytkownika, ListaHasel);
+        }
+        private void WczytajDane()
+        {
+
+        }
+        private void Logowanie()
+        {
+
+        }
+        private void TworzenieKonta()
+        {
+
+        }
         public void UruchomProgram() {
             bool koniec = false;
             Console.WriteLine("Witaj w menedżerze Haseł");
             Console.WriteLine("Możesz zamknąć program poprzez komendę 'zamknij'");
             Console.WriteLine("Komenda 'opcje' Pokarze możliwe opcje w programie");
+            Console.WriteLine("");
+            Console.WriteLine("Zaloguj się albo utwórz nowe konto: wpisz zaloguj lub nowe konto");
+
 
             while (koniec!=true)
             {
                 
                 Console.Write("Podaj komende: ");
                 string komenda=Console.ReadLine();
-
                 switch (komenda)
                 {
+                    case "zaloguj":
+                        Console.WriteLine("---------------Logowanie");
+                        Console.WriteLine("");
+                        Logowanie();
+                        Console.WriteLine("");
+                        break;
+                    case "nowe konto":
+                        Console.WriteLine("---------------Tworzenie Konta");
+                        Console.WriteLine("");
+                        TworzenieKonta();
+                        Console.WriteLine("");
+                        break;
+
                     case "zamknij":
                         koniec = true;
                         
@@ -267,6 +399,13 @@ namespace MenedzerHasel
                         pokazUstawieniaHasel();
                         Console.WriteLine("");
                         break;
+                    case "zapisz":
+                        Console.WriteLine("---------------Zapisywanie do pliku");
+                        Console.WriteLine("");
+                        ZapiszDane();
+                        Console.WriteLine("");
+                        break;
+
                     default:
                         Console.WriteLine("---------------BŁĄD");
                         Console.WriteLine("");
@@ -355,7 +494,7 @@ namespace MenedzerHasel
 
 
     }
-    class Haslo
+     class Haslo
     {
         private GenerujCyfre gen = new GenerujCyfre();
         private GenerujZnakSpecjalny gen2 = new GenerujZnakSpecjalny();
@@ -459,11 +598,7 @@ namespace MenedzerHasel
 
         static void Main(string[] args)
         {
-            /* GenerujCyfre gen = new GenerujCyfre();
-             GenerujZnakSpecjalny gen2 = new GenerujZnakSpecjalny();
-             GenerujLitere gen3 = new GenerujLitere();
-             Haslo haslo = new Haslo("Haslo do szafki",true,true,true,true);
-             haslo.Generuj(256);*/
+            
             Interfejs Inter = new Interfejs();
 
             Inter.UruchomProgram();
